@@ -1,22 +1,44 @@
 # AuthenticLens
 
-AuthenticLens is an image realism and AI-artifact analysis framework for detecting generated-image tells, improving photographic believability, and producing stricter correction prompts for visual tools.
+AuthenticLens is an image realism analysis framework for grading photographic believability and improving visual production quality.
 
-It began as a PDF playbook library. It now also includes a lightweight Android companion app that turns the framework into a practical mobile workflow.
+It began as a PDF playbook library. It now includes a lightweight Android app that directly audits selected images with an offline AuthenticLens scoring engine.
 
 ## What it helps with
 
-- AI-generated image artifact detection
-- Photographic realism checks
+- Image realism review
+- Photographic quality checks
 - Apparel product image QA
-- Ghost mannequin and product-page consistency
-- Mobile / iPhone realism prompting
+- Ghost mannequin and product-page consistency checks
+- Mobile / iPhone realism evaluation
 - Street and location realism checks
-- Correction prompts for ChatGPT, Gemini, Photoshop, Midjourney, and other visual tools
+- Technical grading before publishing or editing
 
 ## Android app
 
-The Android app is an offline prompt-and-QA assistant. It lets you select an image, choose an audit mode, add your goal, then generate a structured AuthenticLens audit and a strict image-correction prompt.
+The Android app is an offline image-audit tool. It lets you select an image, choose an audit mode, add your goal, then grades the image directly from pixel data and AuthenticLens rules.
+
+It measures:
+
+- Brightness and exposure balance
+- Contrast and dynamic range
+- Shadow and highlight clipping
+- Saturation and color cast
+- Sharpness and edge density
+- Grain/noise estimate
+- JPEG blockiness estimate
+- Resolution and aspect ratio
+- Mode-specific readiness for apparel, mobile, street, physics, and artifact-risk workflows
+
+The app returns:
+
+- Score out of 100
+- Letter grade
+- Verdict
+- Score breakdown
+- Measured signals
+- Detected issues
+- Fix list
 
 ### App modes
 
@@ -59,12 +81,12 @@ app/build/outputs/apk/debug/app-debug.apk
 4. Add a goal, for example:
 
 ```text
-Make this product image realistic and product-page ready without changing the garment, embroidery, logo, color, zipper, pockets, silhouette, or artwork.
+Audit this as a premium Melato apparel product image. Check if it is product-page ready without changing the garment, embroidery, logo, color, zipper, pockets, silhouette, or artwork.
 ```
 
-5. Copy the generated audit and prompt.
-6. Paste it into your image editing or generation tool.
-7. Run the final QA checklist before publishing.
+5. Tap **Run AuthenticLens audit**.
+6. Review the score, grade, measured signals, detected issues, and fix list.
+7. Correct the image and re-run the audit before publishing.
 
 ## Repository structure
 
@@ -72,10 +94,9 @@ Make this product image realistic and product-page ready without changing the ga
 app/                    Android app source
 .github/workflows/      APK build workflow
 docs/                   Usage documentation
-prompts/                Reusable AuthenticLens prompts
 *.pdf                   Original AuthenticLens playbooks
 ```
 
 ## Current limitation
 
-The first Android version does not run an on-device AI vision model. It is a structured realism-audit and prompt-generation companion. Use it beside a visual AI/editor for the actual image transformation step.
+The current Android version is offline and rule-based. It does not yet run a semantic vision model, so it cannot fully understand hands, faces, brand logos, text, garment identity, or scene meaning. It still audits and grades the selected image directly inside the app using AuthenticLens technical realism rules.
