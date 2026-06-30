@@ -1,0 +1,7 @@
+<resources>
+    <color name="al_black">#0D0D0F</color>
+    <color name="al_surface">#17171B</color>
+    <color name="al_text">#F4F1EA</color>
+    <color name="al_muted">#B8B0A5</color>
+    <color name="al_gold">#D8B46A</color>
+</resources>
