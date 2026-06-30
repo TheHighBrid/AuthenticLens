@@ -6,15 +6,12 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -35,8 +32,8 @@ public class MainActivity extends Activity {
     private final int muted = Color.rgb(184, 176, 165);
     private final int gold = Color.rgb(216, 180, 106);
 
-    private String selectedMode = PromptEngine.MODE_GENERAL;
-    private String imageMeta = "No image selected yet.";
+    private String selectedMode = AuditRules.MODE_GENERAL;
+    private Uri selectedImageUri;
     private EditText notesInput;
     private TextView outputView;
     private TextView metaView;
@@ -62,7 +59,7 @@ public class MainActivity extends Activity {
         TextView title = textView("AuthenticLens", 32, gold, true);
         root.addView(title);
 
-        TextView subtitle = textView("Image realism audits, AI artifact checks, apparel QA, and correction prompts for human-captured authenticity.", 15, muted, false);
+        TextView subtitle = textView("Offline image realism audits powered by the AuthenticLens rule base: score, grade, diagnose, and fix the selected image inside the app.", 15, muted, false);
         subtitle.setPadding(0, dp(8), 0, dp(18));
         root.addView(subtitle);
 
@@ -88,14 +85,14 @@ public class MainActivity extends Activity {
         previewParams.setMargins(0, dp(12), 0, dp(8));
         root.addView(preview, previewParams);
 
-        metaView = smallCard(imageMeta);
+        metaView = smallCard("No image selected yet.");
         root.addView(metaView);
 
         root.addView(sectionLabel("Notes / goal"));
         notesInput = new EditText(this);
         notesInput.setTextColor(text);
         notesInput.setHintTextColor(muted);
-        notesInput.setHint("Example: Make this Melato product image realistic without changing the garment.");
+        notesInput.setHint("Example: Audit this as a premium Melato apparel product image.");
         notesInput.setMinLines(3);
         notesInput.setGravity(Gravity.TOP);
         notesInput.setTextSize(15);
@@ -103,22 +100,22 @@ public class MainActivity extends Activity {
         notesInput.setPadding(dp(12), dp(12), dp(12), dp(12));
         root.addView(notesInput, matchWrapWithMargins(0, dp(8), 0, dp(12)));
 
-        Button generate = button("Generate audit + prompt");
-        generate.setOnClickListener(v -> generateAudit());
+        Button generate = button("Run AuthenticLens audit");
+        generate.setOnClickListener(v -> runAudit());
         root.addView(generate);
 
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
         actionRow.setPadding(0, dp(10), 0, dp(10));
-        Button copy = button("Copy");
+        Button copy = button("Copy audit");
         copy.setOnClickListener(v -> copyOutput());
-        Button share = button("Share");
+        Button share = button("Share audit");
         share.setOnClickListener(v -> shareOutput());
         actionRow.addView(copy, weightWrap());
         actionRow.addView(share, weightWrap());
         root.addView(actionRow);
 
-        outputView = smallCard("Your AuthenticLens audit will appear here.");
+        outputView = smallCard("Choose an image, pick an audit mode, then run the AuthenticLens audit. The app will grade the image directly from pixel metrics and rule-based scoring.");
         outputView.setTextIsSelectable(true);
         root.addView(outputView);
 
@@ -127,7 +124,7 @@ public class MainActivity extends Activity {
 
     private void renderModeButtons() {
         modeRow.removeAllViews();
-        for (String mode : PromptEngine.MODES) {
+        for (String mode : AuditRules.MODES) {
             Button b = new Button(this);
             b.setAllCaps(false);
             b.setText(mode);
@@ -149,6 +146,7 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         startActivityForResult(intent, PICK_IMAGE_REQUEST);
     }
 
@@ -156,19 +154,19 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri uri = data.getData();
+            selectedImageUri = data.getData();
             try {
-                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                getContentResolver().takePersistableUriPermission(selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
             } catch (Exception ignored) {
                 // Some providers do not grant persistable permissions. The selected session still works.
             }
-            preview.setImageURI(uri);
-            imageMeta = describeImage(uri);
-            metaView.setText(imageMeta);
+            preview.setImageURI(selectedImageUri);
+            metaView.setText(describeSelectedFile(selectedImageUri));
+            outputView.setText("Image loaded. Tap Run AuthenticLens audit to score and diagnose it.");
         }
     }
 
-    private String describeImage(Uri uri) {
+    private String describeSelectedFile(Uri uri) {
         String name = "selected image";
         long size = -1L;
         try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
@@ -179,53 +177,36 @@ public class MainActivity extends Activity {
                 if (sizeIndex >= 0) size = cursor.getLong(sizeIndex);
             }
         } catch (Exception ignored) {}
-
-        String dimensions = "dimensions unavailable";
-        try {
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-            if (bitmap != null) {
-                int w = bitmap.getWidth();
-                int h = bitmap.getHeight();
-                dimensions = w + " x " + h + " px, aspect " + aspect(w, h);
-            }
-        } catch (Exception ignored) {}
-
         String sizeText = size > 0 ? String.format(Locale.US, "%.2f MB", size / 1024f / 1024f) : "file size unavailable";
-        return "Selected: " + name + "\n" + dimensions + "\n" + sizeText;
+        return "Selected: " + name + "\n" + sizeText + "\nReady for direct AuthenticLens analysis.";
     }
 
-    private String aspect(int w, int h) {
-        if (w <= 0 || h <= 0) return "unknown";
-        int gcd = gcd(w, h);
-        return (w / gcd) + ":" + (h / gcd);
-    }
-
-    private int gcd(int a, int b) {
-        while (b != 0) {
-            int t = b;
-            b = a % b;
-            a = t;
+    private void runAudit() {
+        if (selectedImageUri == null) {
+            outputView.setText("Choose an image first. AuthenticLens needs actual pixels to grade, not a blank prompt.");
+            return;
         }
-        return Math.abs(a);
-    }
-
-    private void generateAudit() {
-        String result = PromptEngine.buildAudit(selectedMode, notesInput.getText().toString(), imageMeta);
-        outputView.setText(result);
+        try {
+            outputView.setText("Analyzing image pixels...");
+            String result = ImageAnalyzer.analyze(this, selectedImageUri, selectedMode, notesInput.getText().toString());
+            outputView.setText(result);
+        } catch (Exception error) {
+            outputView.setText("Audit failed: " + error.getMessage());
+        }
     }
 
     private void copyOutput() {
         String value = outputView.getText().toString();
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         clipboard.setPrimaryClip(ClipData.newPlainText("AuthenticLens audit", value));
-        Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Audit copied", Toast.LENGTH_SHORT).show();
     }
 
     private void shareOutput() {
         String value = outputView.getText().toString();
         Intent send = new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_SUBJECT, "AuthenticLens Audit");
+        send.putExtra(Intent.EXTRA_SUBJECT, "AuthenticLens Image Audit");
         send.putExtra(Intent.EXTRA_TEXT, value);
         startActivity(Intent.createChooser(send, "Share AuthenticLens audit"));
     }
