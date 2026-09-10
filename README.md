@@ -1,27 +1,102 @@
 # AuthenticLens
 
-AuthenticLens transforms and analyzes images by detecting AI-generated artifacts and applying real-world photographic physics, imperfections, and textures to make them look authentically human-captured.
+AuthenticLens is an image realism analysis framework for grading photographic believability and improving visual production quality.
 
-## What the app does
+It began as a PDF playbook library. It now includes a lightweight Android app that directly audits selected images with an offline AuthenticLens scoring engine.
 
-- Uploads an image into a browser-based analysis workspace.
-- Produces an artifact-risk report for edge halos, plastic texture, lighting mismatches, provenance issues, and repeated/warped details.
-- Applies a canvas-based realism pass with sensor grain, vignette, micro-contrast, warmth, and subtle texture disruption.
-- Exports the transformed image as a PNG.
+## What it helps with
 
-## Knowledge base
+- Image realism review
+- Photographic quality checks
+- Apparel product image QA
+- Ghost mannequin and product-page consistency checks
+- Mobile / iPhone realism evaluation
+- Street and location realism checks
+- Technical grading before publishing or editing
 
-This repo includes the AuthenticLens PDF corpus covering artifact lexicons, photographic physics, realism prompting formulas, diagnostic classification, enhancement protocols, mobile compression provenance, contextual street realism, and apparel/product QA.
+## Android app
 
-## Local development
+The Android app is an offline image-audit tool. It lets you select an image, choose an audit mode, add your goal, then grades the image directly from pixel data and AuthenticLens rules.
+
+It measures:
+
+- Brightness and exposure balance
+- Contrast and dynamic range
+- Shadow and highlight clipping
+- Saturation and color cast
+- Sharpness and edge density
+- Grain/noise estimate
+- JPEG blockiness estimate
+- Resolution and aspect ratio
+- Mode-specific readiness for apparel, mobile, street, physics, and artifact-risk workflows
+
+The app returns:
+
+- Score out of 100
+- Letter grade
+- Verdict
+- Score breakdown
+- Measured signals
+- Detected issues
+- Fix list
+
+### App modes
+
+- General Realism Audit
+- AI Artifact Scan
+- Photographic Physics
+- Apparel Product QA
+- Mobile / iPhone Realism
+- Contextual Street Realism
+
+### Build the APK with GitHub Actions
+
+1. Open the repository on GitHub.
+2. Go to **Actions**.
+3. Select **Build AuthenticLens APK**.
+4. Run the workflow manually, or push to `main`.
+5. Download the artifact named `authenticlens-debug-apk`.
+6. Inside the artifact, install `app-debug.apk` on your Android device.
+
+### Build locally
+
+You need Android Studio or a local Android SDK.
 
 ```bash
-npm install
-npm run dev
+gradle testDebugUnitTest
+gradle assembleDebug
 ```
 
-## Production build
+The APK will be created at:
 
-```bash
-npm run build
+```text
+app/build/outputs/apk/debug/app-debug.apk
 ```
+
+## Recommended apparel workflow
+
+1. Open AuthenticLens.
+2. Choose **Apparel Product QA**.
+3. Pick the product image.
+4. Add a goal, for example:
+
+```text
+Audit this as a premium Melato apparel product image. Check if it is product-page ready without changing the garment, embroidery, logo, color, zipper, pockets, silhouette, or artwork.
+```
+
+5. Tap **Run AuthenticLens audit**.
+6. Review the score, grade, measured signals, detected issues, and fix list.
+7. Correct the image and re-run the audit before publishing.
+
+## Repository structure
+
+```text
+app/                    Android app source
+.github/workflows/      APK build workflow
+docs/                   Usage documentation
+*.pdf                   Original AuthenticLens playbooks
+```
+
+## Current limitation
+
+The current Android version is offline and rule-based. It does not yet run a semantic vision model, so it cannot fully understand hands, faces, brand logos, text, garment identity, or scene meaning. It still audits and grades the selected image directly inside the app using AuthenticLens technical realism rules.
